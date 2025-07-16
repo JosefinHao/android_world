@@ -1,0 +1,7 @@
+Goal: {goal}
+Observation:
+{observation}
+What is the next best action? Respond in the format:
+CLICK("<UI Element>")
+
+Explain why you chose this action. 

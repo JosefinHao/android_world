@@ -1,0 +1,24 @@
+# FEW-SHOT PROMPT TEMPLATE
+Goal: Uninstall the Slack app
+Observation:
+- App: Settings
+- UI Elements: ["Apps", "Search", "Battery", ...]
+What is the next best action? Respond in the format:
+CLICK("Apps")
+
+---
+
+Goal: Open the calendar and add an event
+Observation:
+- App: Home
+- UI Elements: ["Calendar", "Contacts", "Messages", ...]
+What is the next best action? Respond in the format:
+CLICK("Calendar")
+
+---
+
+Goal: {goal}
+Observation:
+{observation}
+What is the next best action? Respond in the format:
+CLICK("<UI Element>") 
