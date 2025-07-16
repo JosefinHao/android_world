@@ -85,11 +85,12 @@
 
 ## Recommendations for Improving Agent Behavior
 
-- Add a memory buffer (history of actions/observations) for multi-step reasoning.
-- Use more diverse and realistic few-shot examples.
-- Implement retries or self-correction if the LLM hallucinates or outputs invalid actions.
-- Consider using OpenAI function-calling or Anthropic tool-use for structured output.
-- Compare multiple LLMs for robustness and analyze failure cases to guide prompt improvements.
+- Incorporate more advanced search or retrieval mechanisms to help the agent find relevant information in complex or lengthy observations.
+- Implement retry logic or self-correction strategies when the agent produces invalid or hallucinated actions.
+- Refine prompt engineering, including clearer instructions and more targeted few-shot examples, to reduce ambiguity and improve action selection.
+- Explore dynamic adjustment of prompt context (e.g., selectively including only the most relevant history or observations).
+- Investigate hybrid approaches, such as combining LLMs with rule-based or symbolic reasoning for better reliability.
+- Evaluate the impact of different temperature and decoding settings on agent consistency and accuracy.
 
 ---
 
