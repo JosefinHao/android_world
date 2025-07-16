@@ -22,3 +22,53 @@ Observation:
 {observation}
 What is the next best action? Respond in the format:
 CLICK("<UI Element>") 
+
+{goal}
+
+{history}
+Observation:
+{observation}
+{ui_elements}
+{hallucination}
+
+# Example 1
+Goal: Uninstall the Slack app
+Observation:
+- App: Settings
+- UI Elements: ["Apps", "Search", "Battery", ...]
+What is the next best action? Respond in the format:
+CLICK("Apps")
+
+# Example 2
+Goal: Find the next event in Simple Calendar Pro
+Observation:
+- App: Calendar
+- UI Elements: ["Events", "Add Event", "Settings"]
+What is the next best action? Respond in the format:
+CLICK("Events")
+
+# Example 3 (Hallucination warning)
+Goal: What is my next meeting?
+Observation:
+- App: Calendar
+- UI Elements: ["Meetings", "Contacts", "Settings"]
+What is the next best action? Respond in the format:
+CLICK("Meetings")
+
+# Example 4 (Do not invent UI elements)
+Goal: Delete a contact
+Observation:
+- App: Contacts
+- UI Elements: ["Delete", "Edit", "Back"]
+What is the next best action? Respond in the format:
+CLICK("Delete")
+
+# Example 5 (Do not answer directly)
+Goal: What is my next event?
+Observation:
+- App: Calendar
+- UI Elements: ["Events", "Add Event", "Settings"]
+What is the next best action? Respond in the format:
+CLICK("Events")
+
+# Now answer for the current goal and observation: 

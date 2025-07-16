@@ -34,13 +34,27 @@ def format_history(history):
         lines.append(f"Step {i+1} Action: {act}")
     return "\n".join(lines) + "\n"
 
-def format_prompt(goal, observation, variant="base", history=None):
+def format_prompt(goal, observation, variant="base", history=None, ui_elements=None, hallucination_warning=False, model=None):
     if variant == "function_calling":
         # For function-calling, just use a simple instruction
         return f"Goal: {goal}\nObservation:\n{observation}\nWhat is the next best action?"
     template = load_prompt_template(variant)
+    # Limit history to last 2 steps if present
+    if history and len(history) > 2:
+        history = history[-2:]
     history_str = format_history(history) if history else ""
-    return template.format(goal=goal, observation=observation, history=history_str)
+    ui_elements_str = f"You must select one of the following UI elements: {ui_elements}. Do not invent new actions." if ui_elements else ""
+    hallucination_str = "WARNING: Your previous answer was invalid. Only select from the provided UI elements." if hallucination_warning else ""
+    prompt = template.format(goal=goal, observation=observation, history=history_str, ui_elements=ui_elements_str, hallucination=hallucination_str)
+    # Add extra explicit instruction for Claude
+    if model and model.startswith("claude"):
+        forceful_instruction = (
+            "IMPORTANT: RESPOND WITH ONLY CLICK(\"<UI Element>\") AND NOTHING ELSE.\n"
+            "DO NOT explain. DO NOT answer the question directly. DO NOT add any extra text.\n"
+            "WRONG: Answering directly.\nWRONG: Explaining.\nCORRECT: CLICK(\"Apps\")\n"
+        )
+        prompt = forceful_instruction + "\n" + prompt
+    return prompt
 
 def call_openai(prompt, model="gpt-3.5-turbo"):
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -56,7 +70,7 @@ def call_openai(prompt, model="gpt-3.5-turbo"):
         response = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
+            temperature=0.1,  # Lowered temperature for more deterministic output
             max_tokens=256,
         )
         return response.choices[0].message.content.strip()
@@ -92,7 +106,7 @@ def call_openai_function_calling(prompt, model="gpt-4o"):
             messages=[{"role": "user", "content": prompt}],
             functions=functions,
             function_call={"name": "click"},
-            temperature=0.2,
+            temperature=0.1,  # Lowered temperature
             max_tokens=256,
         )
         msg = response.choices[0].message
@@ -120,7 +134,7 @@ def call_claude(prompt, model="claude-3-opus-20240229"):
         response = client.messages.create(
             model=model,
             max_tokens=256,
-            temperature=0.2,
+            temperature=0.1,  # Lowered temperature
             messages=[{"role": "user", "content": prompt}]
         )
         # Claude returns a list of content blocks; join them if needed
@@ -143,7 +157,7 @@ def main():
     print("Observation:")
     print(episode["observation"])
     print("\n--- LLM PROMPT ---")
-    prompt = format_prompt(episode["goal"], episode["observation"], variant, history=None)
+    prompt = format_prompt(episode["goal"], episode["observation"], variant, history=None, model=model)
     print(prompt)
     print("--- END PROMPT ---\n")
     # Call LLM

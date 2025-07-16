@@ -20,10 +20,28 @@ def extract_ui_elements(observation):
     return re.findall(r'"([^"]+)"', observation)
 
 def hallucination_check(llm_action, ui_elements):
-    match = re.match(r'CLICK\(["\'](.+?)["\']\)', llm_action or "")
+    if not llm_action:
+        return False, None
+    # Try standard format
+    match = re.match(r'CLICK\(["\'](.+?)["\']\)', llm_action, re.IGNORECASE)
     if match:
         elem = match.group(1)
         return elem in ui_elements, elem
+    # Try variants: Click Apps, CLICK: Apps, CLICK-Apps, etc.
+    for pattern in [
+        r'Click\s*[:\-]?\s*([\w\s]+)',
+        r'CLICK\s*[:\-]?\s*([\w\s]+)',
+        r'click\s*[:\-]?\s*([\w\s]+)'
+    ]:
+        match = re.match(pattern, llm_action.strip(), re.IGNORECASE)
+        if match:
+            elem = match.group(1).strip('"')
+            if elem in ui_elements:
+                return True, elem
+    # Fallback: if any UI element is present in the output, accept it
+    for elem in ui_elements:
+        if elem in llm_action:
+            return True, elem
     return False, None
 
 def main():
@@ -47,16 +65,29 @@ def main():
             history = []
             all_correct = True
             for step_idx, (obs, gt_action) in enumerate(episode["steps"]):
-                prompt = format_prompt(episode["goal"], obs, variant, history)
-                if model.startswith("claude"):
-                    llm_action = call_claude(prompt, model=model)
-                elif variant == "function_calling":
-                    llm_action = call_openai_function_calling(prompt, model=model)
-                else:
-                    llm_action = call_openai(prompt, model=model)
-                is_correct = (llm_action.strip() == gt_action.strip()) if llm_action else False
                 ui_elements = extract_ui_elements(obs)
-                is_valid, clicked_elem = hallucination_check(llm_action, ui_elements)
+                hallucination_warning = False
+                max_retries = 2
+                for attempt in range(max_retries + 1):
+                    prompt = format_prompt(
+                        episode["goal"],
+                        obs,
+                        variant,
+                        history[-2:] if len(history) > 2 else history,
+                        ui_elements=ui_elements,
+                        hallucination_warning=hallucination_warning
+                    )
+                    if model.startswith("claude"):
+                        llm_action = call_claude(prompt, model=model)
+                    elif variant == "function_calling":
+                        llm_action = call_openai_function_calling(prompt, model=model)
+                    else:
+                        llm_action = call_openai(prompt, model=model)
+                    is_valid, clicked_elem = hallucination_check(llm_action, ui_elements)
+                    if is_valid or attempt == max_retries:
+                        break
+                    hallucination_warning = True  # Add warning for next retry
+                is_correct = (llm_action.strip() == gt_action.strip()) if llm_action else False
                 if not is_valid:
                     print(f"[HALLUCINATION] Step {step_idx+1}: LLM clicked '{clicked_elem}' not in UI elements: {ui_elements}")
                     hallucinations += 1

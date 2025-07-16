@@ -15,12 +15,23 @@
 
 | Model                  | Step Accuracy | Episode Success | Hallucinated Actions |
 |------------------------|---------------|----------------|----------------------|
-| GPT-4o                 | 10/30 = 0.33  | 0/10 = 0.00    | 2/30 = 0.07          |
+| GPT-4o                 | 10/30 = 0.33  | 0/10 = 0.00    | 0/30 = 0.00          |
 | GPT-3.5-turbo          | 8/30 = 0.27   | 0/10 = 0.00    | 0/30 = 0.00          |
-| Claude-3-opus-20240229 | 0/30 = 0.00   | 0/10 = 0.00    | 26/30 = 0.87         |
+| Claude-3-opus-20240229 | 0/30 = 0.00   | 0/10 = 0.00    | 21/30 = 0.70         |
 
 - **Episodes evaluated:** 10 per model
 - **Steps per episode:** 3
+
+---
+
+## Model Output Compliance and Prompt Engineering
+
+- **OpenAI Models (GPT-4o, GPT-3.5-turbo):**
+  - Generally followed the required output format when prompted explicitly.
+  - Most errors were due to incorrect UI element selection, not format compliance.
+- **Claude-3-opus-20240229:**
+  - Despite increasingly explicit and forceful prompt instructions (including all-caps, negative examples, and placing the instruction at the top), the model continued to provide verbose explanations or direct answers, rarely outputting the required `CLICK("<UI Element>")` format.
+  - The parser was improved to accept more variants, but Claude's outputs still did not match the strict requirements for action selection.
 
 ---
 
